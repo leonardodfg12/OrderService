@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: menu-mongodb
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+  
+  menuservice:
+    image: leonardodfg12/menuservice:latest
+    environment:
+      "MONGO_CONNECTION_STRING": "mongodb://mongo:27017"
+      "MONGO_DATABASE_NAME": "FastTechFoods"
+      "RABBITMQ_HOST": "rabbitmq"
+      "RABBITMQ_PASSWORD": "guest"
+      "RABBITMQ_USERNAME": "guest"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+      - rabbitmq
