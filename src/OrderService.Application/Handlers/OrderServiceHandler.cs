@@ -8,8 +8,8 @@ namespace OrderService.Application.Handlers;
 
 public class OrderServiceHandler(IOrderRepository repository, ISendEndpointProvider sendEndpointProvider)
 {
-    private const string OrderStatusChangedEvent = "order-status-changed-event";
-    private const string OrderCreatedEvent = "order-created-event";
+    private const string OrderStatusChangedEvent = "order-status-changed";
+    private const string OrderCreatedEvent = "order-created";
 
     public async Task Handle(CreateOrderCommand command)
     {
