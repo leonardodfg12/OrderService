@@ -1,44 +1,62 @@
-var builder = WebApplication.CreateBuilder(args);
+using System.Diagnostics.CodeAnalysis;
+using MassTransit;
+using MenuService.Infrastructure.Configurations;
+using MongoDB.Driver;
+using OrderService.Application.Handlers;
+using OrderService.Domain.Interfaces;
+using OrderService.Infrastructure.Persistence;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+namespace OrderService.API;
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+[ExcludeFromCodeCoverage]
+public abstract class Program
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
+    public static void Main(string[] args)
     {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast")
-    .WithOpenApi();
+        var builder = WebApplication.CreateBuilder(args);
 
-app.Run();
+        builder.Services.Configure<MongoDbSettings>(
+            builder.Configuration.GetSection("MongoDbSettings"));
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+        builder.Services.AddMassTransit(
+            cfg =>
+            {
+                cfg.UsingRabbitMq((context, config) =>
+                {
+                    config.Host(builder.Configuration["RABBITMQ_HOST"], h =>
+                    {
+                        h.Username(builder.Configuration["RABBITMQ_USERNAME"]!);
+                        h.Password(builder.Configuration["RABBITMQ_PASSWORD"]!);
+                    });
+                });
+            });
+
+        builder.Services.AddSingleton<IMongoClient>(sp =>
+        {
+            var connectionString = builder.Configuration["MONGO_CONNECTION_STRING"];
+            return new MongoClient(connectionString);
+        });
+
+        builder.Services.AddScoped(sp =>
+        {
+            var databaseName = builder.Configuration["MONGO_DATABASE_NAME"];
+            var client = sp.GetRequiredService<IMongoClient>();
+            return client.GetDatabase(databaseName);
+        });
+
+        builder.Services.AddScoped<IOrderRepository, MongoOrderRepository>();
+        builder.Services.AddScoped<OrderServiceHandler>();
+
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        var app = builder.Build();
+
+        app.UseSwagger();
+        app.UseSwaggerUI();
+        app.UseAuthorization();
+        app.MapControllers();
+        app.Run();
+    }
 }
