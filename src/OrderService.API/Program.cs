@@ -1,9 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using MassTransit;
-using MenuService.Infrastructure.Configurations;
 using MongoDB.Driver;
 using OrderService.Application.Handlers;
 using OrderService.Domain.Interfaces;
+using OrderService.Infrastructure.Configurations;
 using OrderService.Infrastructure.Persistence;
 
 namespace OrderService.API;

@@ -50,40 +50,6 @@ public class OrderServiceHandler(IOrderRepository repository, ISendEndpointProvi
     public async Task DeleteAsync(string id) =>
         await repository.DeleteAsync(id);
 
-    public async Task AcceptAsync(string id)
-    {
-        var order = await repository.GetByIdAsync(id);
-        if (order is null) return;
-
-        order.Accept();
-        await repository.UpdateAsync(order);
-
-        var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{OrderStatusChangedEvent}"));
-        await endpoint.Send(new OrderStatusChangedEvent
-        {
-            Id = order.Id,
-            NewStatus = order.Status,
-            UpdatedAt = DateTime.UtcNow
-        });
-    }
-
-    public async Task RejectAsync(string id)
-    {
-        var order = await repository.GetByIdAsync(id);
-        if (order is null) return;
-
-        order.Reject();
-        await repository.UpdateAsync(order);
-
-        var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{OrderStatusChangedEvent}"));
-        await endpoint.Send(new OrderStatusChangedEvent
-        {
-            Id = order.Id,
-            NewStatus = order.Status,
-            UpdatedAt = DateTime.UtcNow
-        });
-    }
-
     public async Task CancelAsync(string id)
     {
         var order = await repository.GetByIdAsync(id);
@@ -99,11 +65,5 @@ public class OrderServiceHandler(IOrderRepository repository, ISendEndpointProvi
             NewStatus = order.Status,
             UpdatedAt = DateTime.UtcNow
         });
-    }
-
-    public async Task<IEnumerable<Order>> GetByStatusAsync(string status)
-    {
-        var all = await repository.GetAllAsync();
-        return all.Where(o => o.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
     }
 }

@@ -41,22 +41,4 @@ public class OrderServiceController(OrderServiceHandler handler) : ControllerBas
         await handler.CancelAsync(id);
         return NoContent();
     }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Accept(string id)
-    {
-        await handler.AcceptAsync(id);
-        return NoContent();
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Reject(string id)
-    {
-        await handler.RejectAsync(id);
-        return NoContent();
-    }
-
-    [HttpGet("{status}")]
-    public async Task<IEnumerable<Order>> ListByStatus(string status) =>
-        await handler.GetByStatusAsync(status);
 }

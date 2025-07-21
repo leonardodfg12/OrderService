@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace MenuService.Infrastructure.Configurations;
+namespace OrderService.Infrastructure.Configurations;
 
 [ExcludeFromCodeCoverage]
 public class MongoDbSettings
