@@ -34,11 +34,4 @@ public class OrderServiceController(OrderServiceHandler handler) : ControllerBas
         await handler.DeleteAsync(id);
         return NoContent();
     }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Cancel(string id)
-    {
-        await handler.CancelAsync(id);
-        return NoContent();
-    }
 }

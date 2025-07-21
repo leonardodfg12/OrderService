@@ -49,21 +49,4 @@ public class OrderServiceHandler(IOrderRepository repository, ISendEndpointProvi
 
     public async Task DeleteAsync(string id) =>
         await repository.DeleteAsync(id);
-
-    public async Task CancelAsync(string id)
-    {
-        var order = await repository.GetByIdAsync(id);
-        if (order is null) return;
-
-        order.Cancel();
-        await repository.UpdateAsync(order);
-
-        var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{OrderStatusChangedEvent}"));
-        await endpoint.Send(new OrderStatusChangedEvent
-        {
-            Id = order.Id,
-            NewStatus = order.Status,
-            UpdatedAt = DateTime.UtcNow
-        });
-    }
 }
